@@ -25,7 +25,7 @@ const port = process.env.PORT;
 import Adonix from "./src/Adonix.js";
 const adx = new Adonix(X3_PATH, ROOT_PATH);
 
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 if (process.env.ENV === "DEV") {
   app.use((req, res, next) => {
@@ -34,18 +34,16 @@ if (process.env.ENV === "DEV") {
   });
 }
 
-app.use((req, res, next) => {
+function isAuthenticated(req, res) {
   if (
-    req.body.username !== process.env.USERNAME ||
-    req.body.password !== process.env.PASSWORD
+    req.query.username !== process.env.CUSERNAME ||
+    req.query.password !== process.env.CPASSWORD
   ) {
-    res.json({
-      message: "unauthenticated",
-    });
+    return false;
   }
 
-  next();
-});
+  return true;
+}
 
 /*
  * Returns JSON to check if the server is up
@@ -62,6 +60,12 @@ app.get("/", (req, res) => {
 app.get("/:folder/files", (req, res) => {
   const X3Folder = req.params.folder.toUpperCase();
 
+  if (!isAuthenticated(req, res)) {
+    return res.json({
+      message: "unauthenticated",
+    });
+  }
+
   adx.files(X3Folder).then((result) => {
     res.json({
       result,
@@ -75,6 +79,12 @@ app.get("/:folder/files", (req, res) => {
  * Returns the file that was requested from the TRT folder
  */
 app.get("/:folder/download", (req, res) => {
+  if (!isAuthenticated(req, res)) {
+    return res.json({
+      message: "unauthenticated",
+    });
+  }
+
   const fileName = req.query.fileName.replace(".src", "");
   const X3Folder = req.params.folder.toUpperCase();
 
@@ -87,6 +97,12 @@ app.get("/:folder/download", (req, res) => {
  * Uploads/compiles the file that was received and compiles
  */
 app.post("/:folder/upload", upload.single("file"), (req, res) => {
+  if (!isAuthenticated(req, res)) {
+    return res.json({
+      message: "unauthenticated",
+    });
+  }
+
   const fileName = req.file.originalname.replace(".src", "");
   const X3Folder = req.params.folder.toUpperCase();
 
