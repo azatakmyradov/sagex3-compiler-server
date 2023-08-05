@@ -34,6 +34,19 @@ if (process.env.ENV === "DEV") {
   });
 }
 
+app.use((req, res, next) => {
+  if (
+    req.body.username !== process.env.USERNAME ||
+    req.body.password !== process.env.PASSWORD
+  ) {
+    res.json({
+      message: "unauthenticated",
+    });
+  }
+
+  next();
+});
+
 /*
  * Returns JSON to check if the server is up
  */
