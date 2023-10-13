@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 const app = express();
-import multer, { Multer } from "multer";
+import multer from "multer";
 import bodyParser from "body-parser";
 import { pino as createLogger } from "pino";
 const logger = createLogger();
@@ -13,10 +13,10 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 
 // tslint:disable-next-line: variable-name
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url)).replace('dist', '');
 
 // Default paths
-const upload: Multer = multer({ dest: "tmp/" });
+const upload = multer({ dest: "dist/tmp/" });
 const X3_PATH: string = process.env.X3_PATH ?? '';
 const ROOT_PATH: string = __dirname;
 const X3_URL: string = process.env.X3_URL ?? '';
@@ -126,10 +126,13 @@ app.post("/:folder/upload", upload.single("file"), (req: Request, res: Response)
     const fileContent = normalizeNewline(fs.readFileSync(req.file.path, "utf8"));
 
     // Write the normalized content back to the same file
-    fs.writeFileSync(req.file.path, fileContent, "utf8");
+    fs.writeFileSync(req.file.filename, fileContent, "utf8");
 
     return adx.sync(x3Folder, req.file.path, fileName).then(() => {
         adx.compile(x3Folder, fileName).then((result) => {
+            fs.unlink(__dirname + req.file?.filename, () => {
+                logger.info("File was deleted after compilation");
+            });
             res.json({
                 message: "uploaded and compiled",
                 result,

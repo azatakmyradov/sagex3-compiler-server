@@ -1,4 +1,5 @@
 import Command from "./Command.js";
+import { escapeShell } from "./helpers.js";
 
 export default class Adonix {
 
@@ -13,7 +14,7 @@ export default class Adonix {
     */
     constructor(x3Path: string, rootPath: string) {
         this.x3Path = x3Path;
-        this.foldersPath = `${x3Path}\\folders`;
+        this.foldersPath = `${x3Path}/folders`;
         this.rootPath = rootPath;
     }
 
@@ -22,14 +23,15 @@ export default class Adonix {
     */
     async files(folder: string): Promise<string> {
         // command: cd C:\example\folder && dir
-        const command: string = `cd ${this.foldersPath}\\${folder}\\TRT && dir`;
+        const path = escapeShell(`${this.foldersPath}/${folder}/TRT`);
+        const command: string = `cd ${path} && dir`;
 
         // fetch file names from TRT folder excluding one starting with "W"
         const files = await Command.execute(command, (response: string) => {
             const files = response
-            .split(" ")
-            .filter((file) => file.match(/\b(?!W)[A-Z][A-Za-z0-9_]*\.src\b/))
-            .map((file) => file.split("src")[0] + "src");
+                .split(" ")
+                .filter((file) => file.match(/\b(?!W)[A-Z][A-Za-z0-9_]*\.src\b/))
+                .map((file) => file.split("src")[0] + "src");
 
             return files;
         });
@@ -42,7 +44,10 @@ export default class Adonix {
     */
     compile(folder: string, fileName: string) {
         // command: cd C:\X3Path-here\runtime && bin\env.bat && bin\valtrt SEED EXAMPLE.src
-        const command = `cd ${this.x3Path}\\runtime && bin\\env.bat && bin\\valtrt ${folder} ${fileName}`;
+        const path = escapeShell(`${this.x3Path}/runtime`);
+        const envBat = escapeShell(`bin/env.bat`);
+        const valtrt = escapeShell(`bin/valtrt`);
+        const command = `cd ${path} && ${envBat} && ${valtrt} ${folder} ${fileName}`;
 
         return Command.execute(command, (result: string) => {
             return result;
@@ -54,7 +59,9 @@ export default class Adonix {
     */
     fetch(folder: string, fileName: string): Promise<FetchResult> {
         // command: xcopy C:\PATH_TO_X3\folders\Folder\TRT\EXAMPLE.src C:\NODE_PROJECT\tmp -Y
-        const command = `xcopy ${this.foldersPath}\\${folder}\\TRT\\${fileName}.src ${this.rootPath}\\tmp\\ /Y`;
+        const origin = escapeShell(`${this.foldersPath}/${folder}/TRT/${fileName}.src`);
+        const destination = escapeShell(`${this.rootPath}/tmp/`);
+        const command = `xcopy ${origin} ${destination} /Y`;
 
         return Command.execute(command, (result: string): FetchResult  => {
             const returnResult: FetchResult = {
@@ -71,7 +78,9 @@ export default class Adonix {
     */
     sync(folder: string, target: string, destination: string) {
         // command: move C:\NODE_PROJECT\tmp C:\PATH_TO_X3\folders\Folder\TRT\EXAMPLE.src
-        const command = `move ${this.rootPath}\\${target} ${this.foldersPath}\\${folder}\\TRT\\${destination}.src`;
+        const origin = escapeShell(`${this.rootPath}/${target}`);
+        const destinationPath = escapeShell(`${this.foldersPath}/${folder}/TRT/${destination}.src`);
+        const command = `move ${origin} ${destinationPath}`;
 
         return Command.execute(command, (result: string) => {
             return {
