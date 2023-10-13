@@ -1,5 +1,5 @@
 module.exports = {
-  name: "compiler",
-  script: "main.js",
-  args: "watch",
+    name: "compiler",
+    script: "dist/main.js",
+    args: "watch",
 };
