@@ -1,3 +1,8 @@
+# Installation
+```
+npx x3-install-compiler
+```
+
 # Configuration
 1. Clone the repository to the C:\ drive.
 2. Copy **.env.example** to **.env** and change the values of **X3_PATH** and **X3_URL** in the **.env** file. **X3_PATH** should be the parent folder of **folders** and **runtime**
