@@ -17,5 +17,8 @@
     "normalize-newline": "^4.1.0",
     "pino": "^8.14.1"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
 }
